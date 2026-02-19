@@ -1,0 +1,20 @@
+pipeline {
+    agent any
+    environment {
+        REGISTRY = "my-registry.local:5000"
+        IMAGE = "${REGISTRY}/api-gateway"
+    }
+    stages {
+        stage('Checkout') { steps { checkout scm } }
+        stage('Build') { steps { sh 'mvn clean package -DskipTests' } }
+        stage('Docker Build & Push') {
+            steps {
+                sh 'docker build -t $IMAGE:latest .'
+                sh 'docker push $IMAGE:latest'
+            }
+        }
+        stage('Deploy to Kubernetes') {
+            steps { sh 'kubectl apply -f ../k8s/api-gateway-deployment.yaml' }
+        }
+    }
+}
